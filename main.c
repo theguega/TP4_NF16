@@ -3,7 +3,7 @@
 
 int main(void) {
     //Nom du fichier
-    char * filename = "/Users/theoguegan/Documents/UTC/TC04/NF16/TPs/TP4/TP4/test.txt";
+    char * filename = "test.txt";
 
     // Indexation d'un fichier :
       T_Index *index = creerT_Index(filename);
