@@ -1,6 +1,6 @@
 #include "tp4.h"
 #define TAILLE_LIGNE 1000
-#define TAILLE_MOT 20
+#define TAILLE_MOT 30
 
 // * --------------------- * //
 // * Création de structure * //
@@ -19,14 +19,12 @@ T_Position *creerT_Position(int ligne, int ordre, int phrase) {
 
 T_Noeud *creerT_Noeud(char *mot, int ligne, int ordre, int phrase) {
 
-  char *mot_maj = malloc(sizeof(strlen(mot)) + 1);
-  mot_maj = to_maj(mot);
-
   // creation du noeud
-  T_Noeud *nouveau_noeud = malloc(sizeof(T_Noeud));
+  T_Noeud *nouveau_noeud = (T_Noeud *)malloc(sizeof(T_Noeud));
   nouveau_noeud->filsDroit = NULL;
   nouveau_noeud->filsGauche = NULL;
-  nouveau_noeud->mot = mot_maj;
+    nouveau_noeud->mot = malloc(sizeof(strlen(mot)) + 1);
+    nouveau_noeud->mot = to_maj(mot);
   nouveau_noeud->nbOccurences = 1;
   nouveau_noeud->listePositions = creerT_Position(ligne, ordre, phrase);
 
@@ -314,7 +312,7 @@ void afficherListeT_Position(T_Position *liste) {
 
 void afficherT_Noeud(T_Noeud *n) {
   if (n == NULL) {
-    printf("Noeud : NULL\n");
+    printf("Votre mot n'est pas dans le texte\n");
     return;
   } else {
     printf("|--%s\n", n->mot);
@@ -352,7 +350,7 @@ void afficherIndex(T_Index index) {
       afficherT_Noeud(n);
     }
 
-    // puis on se deplace à droite et in recommence
+    // puis on se deplace à droite et on recommence
     n = n->filsDroit;
   }
 
@@ -363,87 +361,143 @@ void afficherIndex(T_Index index) {
 void afficherOccurencesMot(T_Index index, char *mot) {
   // on recupere l'adresse du mot et on initialise nos tableaux de position
   T_Noeud *n = rechercherMot(index, mot);
-    if (n!=NULL) {
-        int *tab_phrase = malloc(n->nbOccurences * sizeof(int));
-        int *tab_ordre = malloc(n->nbOccurences * sizeof(int));
-        int *tab_ligne = malloc(n->nbOccurences * sizeof(int));
-        
-        // reuperation des positions
-        T_Position *tmp = n->listePositions;
-        for (int i = 0; i < n->nbOccurences; i++) {
-            tab_ordre[i] = tmp->ordre;
-            tab_phrase[i] = tmp->numeroPhrase;
-            tab_ligne[i] = tmp->numeroLigne;
-            tmp = tmp->suivant;
-        }
-        
-        // indexation par ordre de phrase :
-        Index_ordre_texte *index_ordre = malloc(sizeof(Index_ordre_texte));
-        index_ordre = creerT_Index_ordre();
-        indexerFichier_ordreTexte(index_ordre, index.filename);
-        
-        // affichage :
-        printf("\nMot = \"%s\"\n", n->mot);
-        printf("Occurences = %d\n", n->nbOccurences);
-        for (int i = 0; i < n->nbOccurences; i++) {
-            // positionnement dans l'index :
-            T_Phrase *phrase = index_ordre->racine;
-            T_Mot *mot_liste = NULL;
-            for (int j = 1; j < tab_phrase[i]; j++) {
-                phrase = phrase->suivante;
-            }
-            
-            printf("| Ligne %d, mot %d :", tab_ligne[i], tab_ordre[i]);
-            
-            // affichage de la phrase :
-            mot_liste = phrase->premier_mot;
-            for (int k = 0; k < phrase->nb_mot; k++) {
-                printf(" %s", mot_liste->mot);
-                mot_liste = mot_liste->suivant;
-            }
-            printf(".\n");
-        }
-        printf("\n");
-    } else {
-        printf("Le mot n'existe pas dans le texte");
+  if (n != NULL) {
+    int *tab_phrase = malloc(n->nbOccurences * sizeof(int));
+    int *tab_ordre = malloc(n->nbOccurences * sizeof(int));
+    int *tab_ligne = malloc(n->nbOccurences * sizeof(int));
+
+    // reuperation des positions
+    T_Position *tmp = n->listePositions;
+    for (int i = 0; i < n->nbOccurences; i++) {
+      tab_ordre[i] = tmp->ordre;
+      tab_phrase[i] = tmp->numeroPhrase;
+      tab_ligne[i] = tmp->numeroLigne;
+      tmp = tmp->suivant;
     }
+
+    // indexation par ordre de phrase :
+    Index_ordre_texte *index_ordre = malloc(sizeof(Index_ordre_texte));
+    index_ordre = creerT_Index_ordre();
+    indexerFichier_ordreTexte(index_ordre, index.filename);
+
+    // affichage :
+    printf("\nMot = \"%s\"\n", n->mot);
+    printf("Occurences = %d\n", n->nbOccurences);
+    for (int i = 0; i < n->nbOccurences; i++) {
+      // positionnement dans l'index :
+      T_Phrase *phrase = index_ordre->racine;
+      T_Mot *mot_liste = NULL;
+      for (int j = 1; j < tab_phrase[i]; j++) {
+        phrase = phrase->suivante;
+      }
+
+      printf("| Ligne %d, mot %d :", tab_ligne[i], tab_ordre[i]);
+
+      // affichage de la phrase :
+      mot_liste = phrase->premier_mot;
+      for (int k = 0; k < phrase->nb_mot; k++) {
+        printf(" %s", mot_liste->mot);
+        mot_liste = mot_liste->suivant;
+      }
+      printf(".\n");
+    }
+    printf("\n");
+
+    // on supprime l'index par ordre de texte :
+    supprimer_indexOrdreTexte(index_ordre);
+  } else {
+    printf("Le mot n'existe pas dans le texte");
+  }
   return;
 }
 
-void construireTexte(char *filename) {
-  Index_ordre_texte *index = malloc(sizeof(Index_ordre_texte));
-  index = creerT_Index_ordre();
-  indexerFichier_ordreTexte(index, filename);
+void construireTexte(T_Index index, char *filename) {
+  // Indexation par ordre du texte
+  Index_ordre_texte *index_2 = malloc(sizeof(Index_ordre_texte));
+  index_2 = creerT_Index_ordre();
+  indexerFichier_ordreTexte(index_2, index.filename);
 
-  T_Phrase *phrase = index->racine;
+  T_Phrase *phrase = index_2->racine;
   T_Mot *mot_liste = NULL;
-
   // reference de phrase et de ligne
   int ligne_actuelle = -1;
 
-  // Affichage de l'index
-  while (phrase != NULL && phrase->nb_mot != 0) {
-    mot_liste = phrase->premier_mot;
+  // Creation et ouverture du fichier
+  FILE *fichier = NULL;
+  fichier = fopen(filename, "w");
+  if (fichier != NULL) {
+    ligne_actuelle = 1;
 
-    for (int i = 0; i < phrase->nb_mot; i++) {
-      // si la ligne change, on print un retour chariot
-      if (ligne_actuelle != mot_liste->nb_ligne) {
-        printf("\n");
-        ligne_actuelle = mot_liste->nb_ligne;
-      } else {
-        // sinon juste un espace
-        printf(" ");
+    while (phrase != NULL && phrase->nb_mot != 0) {
+      mot_liste = phrase->premier_mot;
+
+      for (int i = 0; i < phrase->nb_mot; i++) {
+        // si la ligne change, on print un retour chariot
+        if (ligne_actuelle != mot_liste->nb_ligne) {
+          fputs("\n", fichier);
+          ligne_actuelle = mot_liste->nb_ligne;
+        } else if (ligne_actuelle == mot_liste->nb_ligne &&
+                   mot_liste->indice != 1) {
+          // sinon juste un espace
+          fputs(" ", fichier);
+        }
+        // affichage du mot
+        fputs(mot_liste->mot, fichier);
+        mot_liste = mot_liste->suivant;
       }
-      // affichage du mot
-      printf("%s", mot_liste->mot);
-      mot_liste = mot_liste->suivant;
+
+      // changement de phrase
+      fputs(".", fichier);
+      phrase = phrase->suivante;
+    }
+    fputs("\n", fichier);
+    fclose(fichier);
+  }
+
+  // on supprime l'index par ordre de texte :
+  supprimer_indexOrdreTexte(index_2);
+  return;
+}
+
+// * --------------------- * //
+// * Fonctions de supression * //
+// * --------------------- * //
+
+void supprimer_indexOrdreTexte(Index_ordre_texte *index) {
+  // racine
+  T_Phrase *phrase = index->racine;
+
+  // parcour et supression de toutes les phrases
+  while (phrase != NULL) {
+    T_Phrase *phrase_tmp = phrase;
+    phrase = phrase->suivante;
+
+    // on supprime tous les mots de la phrase
+    T_Mot *mot = phrase_tmp->premier_mot;
+    while (mot != NULL) {
+      T_Mot *mot_tmp = mot;
+      mot = mot->suivant;
+
+      // supression des pointeurs de mots
+      free(mot_tmp->mot);
+
+      free(mot_tmp);
     }
 
-    // changement de phrase
-    printf(".");
-    phrase = phrase->suivante;
+    free(phrase_tmp);
   }
-  printf("\n");
+
+  free(index);
+
+  return;
+}
+
+void supprimer_Arbre(T_Noeud *n) {
+  if (n != NULL) {
+    supprimer_Arbre(n->filsDroit);
+    supprimer_Arbre(n->filsGauche);
+    free(n);
+  }
   return;
 }
 
@@ -611,4 +665,12 @@ void indexerFichier_ordreTexte(Index_ordre_texte *index, char *filename) {
   // fermeture du fichier
   fclose(fichier);
   return;
+}
+
+// Vider le buffer (utile quand on utlise des getchar() )
+void viderBuffer(void) {
+  int c = 0;
+  while (c != '\n' && c != EOF) {
+    c = getchar();
+  }
 }
