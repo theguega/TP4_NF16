@@ -1,6 +1,5 @@
 #ifndef tp4_h
 #define tp4_h
-
 #define MAXP 20
 //#define MAXF 100
 
@@ -92,7 +91,7 @@ int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre,
                      int phrase);
 int indexerFichier(T_Index *index, char *filename);
 T_Noeud *rechercherMot(T_Index index, char *mot);
-void construireTexte(char *filename);
+void construireTexte(T_Index index, char *filename);
 
 // * --------------------- * //
 // * Fonctions D'Affichage * //
@@ -103,6 +102,13 @@ void afficherListeT_Position(T_Position *liste);
 void afficherT_Noeud(T_Noeud *n);
 void afficherIndex(T_Index index);
 void afficherOccurencesMot(T_Index index, char *mot);
+
+// * --------------------- * //
+// * Fonctions de supression * //
+// * --------------------- * //
+
+void supprimer_indexOrdreTexte(Index_ordre_texte *index);
+void supprimer_Arbre(T_Noeud *n);
 
 // * ----------------- * //
 // * Fonctions Annexes * //
@@ -117,5 +123,7 @@ void empiler(pile *p, T_Noeud *noeud);
 char *to_maj(char *mot);
 
 void indexerFichier_ordreTexte(Index_ordre_texte *index, char *filename);
+
+void viderBuffer(void);
 
 #endif /* structure_h */
